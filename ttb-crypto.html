@@ -1,0 +1,190 @@
+<script type="text/x-red" data-template-name="ttb-crypto">
+    <div class="form-row">
+        <label for="node-input-action"><i class="fa fa-tag"></i> <span data-i18n="ttb-crypto.action"></span></label>
+        <input type="text" id="node-input-action" style="width:70%">
+        <input type="hidden" id="node-input-actionType">
+    </div>
+    <div class="form-row">
+        <label for="node-input-algo"><i class="fa fa-tag"></i> <span data-i18n="ttb-crypto.algo"></span></label>
+        <input type="text" id="node-input-algo" style="width:70%">
+        <input type="hidden" id="node-input-algoType">
+    </div>
+
+    <div class="form-row rsaKeyPath" style="/*display:none;*/">
+        <label for="node-input-pubKey"><i class="fa fa-tag"></i> <span data-i18n="ttb-crypto.pubKey"></span></label>
+        <input type="text" id="node-input-pubKey" style="width:70%">
+        <input type="hidden" id="node-input-pubKeyType">
+    </div>
+    <div class="form-row rsaKeyPath" style="/*display:none;*/">
+        <label for="node-input-privKey"><i class="fa fa-tag"></i> <span data-i18n="ttb-crypto.privKey"></span></label>
+        <input type="text" id="node-input-privKey" style="width:70%">
+        <input type="hidden" id="node-input-privKeyType">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="ttb-crypto.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]ttb-crypto.name">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="ttb-crypto">
+    <p>Cipher or Decipher text for TheThingBox usage.</p>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt class="optional">payload <span class="property-type">string</span></dt>
+        <dd>The text to work with.</dd>
+    </dl>
+    <h3>Outputs</h3>
+    <ol class="node-ports">
+        <dl class="message-properties">
+            <dt>payload <span class="property-type">string</span></dt>
+            <dd>The modified text. Can be erased if an error occurred</dd>
+        </dl>
+        <dl class="message-properties">
+            <dt>error <span class="property-type">string</span></dt>
+            <dd>The error, if it occurred.</dd>
+        </dl>
+        <dl class="message-properties">
+            <dt>signature <span class="property-type">bool</span></dt>
+            <dd>On decipher with RSA key, will set to true if the signature matches the private key.</dd>
+        </dl>
+    </ol>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('ttb-crypto',{
+        category: 'advanced-function',
+        color:"#ffffff",
+        defaults: {
+            action: {value:""},
+            actionType: { value: "cipherAction"},
+            algo: {value:""},
+            algoType: { value: "rsa-aes-256-gcm"},
+            pubKey: {value:""},
+            pubKeyType: { value: "defaultPubKey"},
+            privKey: {value:""},
+            privKeyType: { value: "defaultPrivKey"},
+            name: {value:""}
+        },
+        inputs:1,
+        outputs:1,
+        outputLabels: ["stdout","stderr","return code"],
+        icon: "arrow-in.png",
+        align: "right",
+        label: function() {
+            return this.name||this.action||'ttb crypto';
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
+        },
+        oneditprepare: function() {
+            /*************************/
+            /****** TYPE ACTION *****/
+            /*************************/
+            if (this.actionType == null) {
+                if (this.action == "") {
+                    this.actionType = "cipherAction";
+                } else {
+                    this.actionType = "setAction";
+                }
+            }
+            $("#node-input-actionType").val(this.actionType);
+            $("#node-input-action").typedInput({
+                default: 'cipherAction',
+                typeField: $("#node-input-actionType"),
+                types: [{
+                    value: "cipherAction",
+                    label: this._("ttb-crypto.inputs.cipher"),
+                    hasValue: false
+                },{
+                    value: "decipherAction",
+                    label: this._("ttb-crypto.inputs.decipher"),
+                    hasValue: false
+                },{
+                    value: "setAction",
+                    label: this._("ttb-crypto.inputs.setBy") + "  msg.action",
+                    hasValue: false
+                }, "msg"]
+            });
+            $("#node-input-action").typedInput('type', this.actionType);
+
+            /*************************/
+            /******* TYPE ALGO ******/
+            /*************************/
+            if (this.algoType == null) {
+                if (this.algo == "") {
+                    this.algoType = "rsa-aes-256-gcmAlgo";
+                } else {
+                    this.algoType = "rsa-aes-256-gcmAlgo";
+                }
+            }
+            $("#node-input-algoType").val(this.algoType);
+            $("#node-input-algo").typedInput({
+                default: 'rsa-aes-256-gcmAlgo',
+                typeField: $("#node-input-algoType"),
+                types: [{
+                    value: "rsa-aes-256-gcmAlgo",
+                    label: this._("ttb-crypto.inputs.rsa-aes-256-gcm"),
+                    hasValue: false
+                }]
+            });
+            $("#node-input-algo").typedInput('type', this.algoType);
+
+            /*************************/
+            /****** TYPE PUB KEY *****/
+            /*************************/
+            if (this.pubKeyType == null) {
+                if (this.pubKey == "") {
+                    this.pubKeyType = "defaultPubKey";
+                } else {
+                    this.pubKeyType = "setPubKey";
+                }
+            }
+            $("#node-input-pubKeyType").val(this.pubKeyType);
+            $("#node-input-pubKey").typedInput({
+                default: 'defaultPubKey',
+                typeField: $("#node-input-pubKeyType"),
+                types: [{
+                    value: "defaultPubKey",
+                    label: "/root/certs/my-ttb.pub",
+                    hasValue: false
+                },{
+                    value: "mythingboxPubKey",
+                    label: "/root/certs/serv.pub",
+                    hasValue: false
+                },{
+                    value: "setPubKey",
+                    label: this._("ttb-crypto.inputs.setBy") + "  msg.publicKey",
+                    hasValue: false
+                }, "msg"]
+            });
+            $("#node-input-pubKey").typedInput('type', this.pubKeyType);
+
+            /*************************/
+            /***** TYPE PRIV KEY *****/
+            /*************************/
+            if (this.privKeyType == null) {
+                if (this.privKey == "") {
+                    this.privKeyType = "defaultPrivKey";
+                } else {
+                    this.privKeyType = "setPrivKey";
+                }
+            }
+            $("#node-input-privKeyType").val(this.privKeyType);
+            $("#node-input-privKey").typedInput({
+                default: 'defaultPrivKey',
+                typeField: $("#node-input-privKeyType"),
+                types: [{
+                    value: "defaultPrivKey",
+                    label: "/root/certs/my-ttb.key.pem",
+                    hasValue: false
+                },{
+                    value: "setPrivKey",
+                    label: this._("ttb-crypto.inputs.setBy") + "  msg.privateKey",
+                    hasValue: false
+                }, "msg"]
+            });
+            $("#node-input-privKey").typedInput('type', this.privKeyType);
+        }
+    });
+</script>

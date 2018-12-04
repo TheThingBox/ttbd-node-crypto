@@ -1,0 +1,15 @@
+{
+    "ttb-crypto": {
+        "name": "Nom",
+        "algo": "Algorithme",
+        "action": "Action",
+        "pubKey": "Clef publique",
+        "privKey": "Clef privée",
+        "inputs": {
+          "setBy": "Utiliser",
+          "cipher": "Chiffrer",
+          "decipher": "Dechiffrer",
+          "rsa-aes-256-gcm": "aes-256-gcm avec RSA"
+        }
+    }
+}

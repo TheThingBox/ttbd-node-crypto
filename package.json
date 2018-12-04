@@ -1,0 +1,16 @@
+{
+  "name": "ttbd-node-crypto",
+  "version": "0.0.1",
+  "description": "Provide some crypto functions for TheThingBox.",
+  "node-red": {
+    "nodes": {
+      "ttb-crypto": "ttb-crypto.js"
+    }
+  },
+  "keywords": [
+    "node-red",
+    "TheThingBox"
+  ],
+  "author": "http://www.digitalairways.com/",
+  "license": "http://www.wtfpl.net"
+}
